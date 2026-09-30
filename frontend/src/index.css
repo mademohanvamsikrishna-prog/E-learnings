@@ -1,0 +1,290 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* ── Modern Professional EdTech Palette (Udemy & Coursera Inspired) ────────── */
+:root {
+  /* Brand Primary: Udemy Deep Violet & Royal Indigo */
+  --color-primary-50:  #f5f3ff;
+  --color-primary-100: #ede9fe;
+  --color-primary-200: #ddd6fe;
+  --color-primary-300: #c4b5fd;
+  --color-primary-400: #a78bfa;
+  --color-primary-500: #8b5cf6;
+  --color-primary-600: #5624d0; /* Signature Udemy Violet */
+  --color-primary-700: #431ba8;
+  --color-primary-800: #341584;
+  --color-primary-900: #230d5b;
+
+  /* Clean SaaS Canvas & Neutral Surfaces */
+  --color-bg-main:         #ffffff; /* Clean white canvas */
+  --color-bg-secondary:    #f8fafc; /* Slate-50 soft alternate section */
+  --color-surface-card:    #ffffff; /* Crisp white card */
+  --color-surface-border:  #e2e8f0; /* Crisp slate-200 border */
+  --color-surface-hover:   #f1f5f9; /* Slate-100 hover */
+
+  /* Typography */
+  --color-text-main:       #1c1d1f; /* High-contrast Udemy dark charcoal */
+  --color-text-body:       #334155; /* Slate-700 readable body */
+  --color-text-muted:      #64748b; /* Slate-500 subtitle */
+  --color-text-light:      #94a3b8; /* Slate-400 subtle */
+
+  /* Accents */
+  --color-accent-gold:     #e59819; /* Udemy Star Rating Gold */
+  --color-accent-amber:    #f59e0b;
+  --color-accent-coral:    #ec5252; /* Udemy Sale / Hot Badge */
+  --color-accent-emerald:  #10b981; /* Success Green */
+  --color-accent-purple:   #a435f0; /* Vibrant Violet */
+}
+
+@theme {
+  --color-primary-50:  var(--color-primary-50);
+  --color-primary-100: var(--color-primary-100);
+  --color-primary-200: var(--color-primary-200);
+  --color-primary-300: var(--color-primary-300);
+  --color-primary-400: var(--color-primary-400);
+  --color-primary-500: var(--color-primary-500);
+  --color-primary-600: var(--color-primary-600);
+  --color-primary-700: var(--color-primary-700);
+  --color-primary-800: var(--color-primary-800);
+  --color-primary-900: var(--color-primary-900);
+
+  --font-family-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #ffffff;
+}
+
+body {
+  background-color: var(--color-bg-main);
+  color: var(--color-text-main);
+  font-family: var(--font-family-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Professional Typography Utilities ────────────────────────────────────── */
+.heading-hero {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
+  color: #1c1d1f;
+}
+
+.text-brand-gradient {
+  background: linear-gradient(135deg, #5624d0 0%, #a435f0 50%, #2563eb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ── Buttons (Udemy & SaaS High Conversion Standard) ─────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6875rem 1.375rem;
+  border-radius: 0.625rem;
+  background-color: #5624d0;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  border: 1px solid #5624d0;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(86, 36, 208, 0.18);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+.btn-primary:hover {
+  background-color: #431ba8;
+  border-color: #431ba8;
+  box-shadow: 0 6px 18px rgba(86, 36, 208, 0.28);
+  transform: translateY(-1.5px);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6875rem 1.375rem;
+  border-radius: 0.625rem;
+  background-color: #ffffff;
+  color: #1c1d1f;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  border: 1.5px solid #1c1d1f;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+.btn-secondary:hover {
+  background-color: #f8fafc;
+  color: #5624d0;
+  border-color: #5624d0;
+  transform: translateY(-1px);
+}
+
+.btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.6875rem 1.375rem;
+  border-radius: 0.625rem;
+  background-color: #a435f0;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  border: 1px solid #a435f0;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(164, 53, 240, 0.25);
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.btn-accent:hover {
+  background-color: #8928ce;
+  border-color: #8928ce;
+  transform: translateY(-1.5px);
+}
+
+/* ── Course & Dashboard Cards ─────────────────────────────────────────────── */
+.card {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.875rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-hover:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 14px 30px -4px rgba(15, 23, 42, 0.08), 0 4px 10px -2px rgba(15, 23, 42, 0.04);
+  transform: translateY(-3px);
+}
+
+.input {
+  width: 100%;
+  padding: 0.6875rem 1rem;
+  border-radius: 0.625rem;
+  background-color: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #1c1d1f;
+  font-size: 0.875rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+.input::placeholder {
+  color: #94a3b8;
+}
+.input:focus {
+  border-color: #5624d0;
+  box-shadow: 0 0 0 3px rgba(86, 36, 208, 0.15);
+}
+
+/* ── Badge Utilities ──────────────────────────────────────────────────────── */
+.badge-bestseller {
+  background-color: #eceb98;
+  color: #3d3c0a;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  letter-spacing: -0.01em;
+}
+
+.badge-new {
+  background-color: #e0f2fe;
+  color: #0369a1;
+  font-weight: 700;
+  font-size: 0.6875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+/* ── Professional E-Learning Keyframe Animations ──────────────────────────── */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes floatReverse {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-float {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+.animate-float-reverse {
+  animation: floatReverse 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* ── Custom Scrollbars ────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
