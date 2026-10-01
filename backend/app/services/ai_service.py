@@ -3,6 +3,8 @@ from typing import Optional
 
 from app.core.config import get_settings
 from app.schemas.ai import (
+    AIChatRequest,
+    AIChatResponse,
     AITutorRequest,
     AITutorResponse,
     AIQuizGenerateRequest,
@@ -10,6 +12,7 @@ from app.schemas.ai import (
     AIStudyPlanRequest,
     AIGenericResponse,
 )
+from app.services.openai_service import OpenAIService
 
 settings = get_settings()
 logger = logging.getLogger(__name__)
@@ -18,26 +21,49 @@ logger = logging.getLogger(__name__)
 class AIService:
     """
     Abstraction layer for all AI provider calls.
-    Switch between Gemini and OpenAI by changing AI_PROVIDER in .env.
+    Defaults to OpenAI and uses dedicated OpenAIService for chat tutoring.
     Never expose API keys — they live in settings (from .env).
     """
 
     def __init__(self):
-        self.provider = settings.ai_provider
+        self.provider = settings.ai_provider or "openai"
+        self.openai_service = OpenAIService()
 
-    def _get_client(self):
-        """Return the appropriate SDK client based on configured provider."""
-        if self.provider == "gemini":
-            import google.generativeai as genai
-            genai.configure(api_key=settings.gemini_api_key)
-            return genai.GenerativeModel("gemini-1.5-flash")
-        elif self.provider == "openai":
-            from openai import AsyncOpenAI
-            return AsyncOpenAI(api_key=settings.openai_api_key)
-        raise ValueError(f"Unknown AI provider: {self.provider}")
+    async def chat(self, request: AIChatRequest) -> AIChatResponse:
+        """Answer a student's chat query with conversation context and educational rules."""
+        query = request.get_query()
+        if self.provider == "openai":
+            res = await self.openai_service.generate_tutor_response(
+                user_message=query,
+                history=request.history,
+                course_title=request.course_title,
+                lesson_title=request.lesson_title,
+                topic=request.topic,
+            )
+            return AIChatResponse(
+                success=True,
+                answer=res["answer"],
+                model_used=res["model"],
+            )
+
+        # Gemini fallback
+        prompt = (
+            f"You are an AI Tutor in an e-learning platform. "
+            f"Answer the student's question clearly and educationally:\n\n{query}"
+        )
+        answer = await self._generate(prompt)
+        return AIChatResponse(success=True, answer=answer, model_used=self.provider)
 
     async def ask_tutor(self, request: AITutorRequest) -> AITutorResponse:
         """Answer a student's question using the AI tutor."""
+        if self.provider == "openai":
+            res = await self.openai_service.generate_tutor_response(
+                user_message=request.question,
+                course_title=request.course_id,
+                lesson_title=request.lesson_id,
+            )
+            return AITutorResponse(answer=res["answer"], model_used=res["model"])
+
         prompt = (
             f"You are a helpful e-learning tutor. "
             f"Answer the following question clearly and concisely:\n\n{request.question}"
@@ -90,7 +116,7 @@ class AIService:
                 from openai import AsyncOpenAI
                 client = AsyncOpenAI(api_key=settings.openai_api_key)
                 response = await client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model=settings.openai_model or "gpt-4o-mini",
                     messages=[{"role": "user", "content": prompt}],
                 )
                 return response.choices[0].message.content or ""

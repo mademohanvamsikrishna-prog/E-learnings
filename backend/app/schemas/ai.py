@@ -1,5 +1,39 @@
-from typing import Optional
-from pydantic import BaseModel
+from typing import Optional, List, Literal
+from pydantic import BaseModel, Field
+
+
+class ChatMessageItem(BaseModel):
+    """A single turn in the chat history."""
+    role: Literal["user", "assistant", "system"]
+    content: str
+
+
+class AIChatRequest(BaseModel):
+    """
+    Incoming chat request for AI Tutor.
+    Supports 'message' (per specification) and 'question' (for backward compatibility).
+    """
+    message: Optional[str] = None
+    question: Optional[str] = None
+    history: Optional[List[ChatMessageItem]] = Field(default_factory=list)
+    course_id: Optional[str] = None
+    course_title: Optional[str] = None
+    lesson_id: Optional[str] = None
+    lesson_title: Optional[str] = None
+    topic: Optional[str] = None
+
+    def get_query(self) -> str:
+        """Extract and clean query from message or question."""
+        text = self.message if self.message is not None else self.question
+        return (text or "").strip()
+
+
+class AIChatResponse(BaseModel):
+    """Standardized response from AI Tutor."""
+    success: bool = True
+    answer: Optional[str] = None
+    message: Optional[str] = None
+    model_used: Optional[str] = None
 
 
 class AITutorRequest(BaseModel):

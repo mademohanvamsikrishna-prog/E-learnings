@@ -9,6 +9,7 @@ from app.database.database import async_session_factory
 
 # ─── Bearer token extractor ──────────────────────────────────────────────────────
 bearer_scheme = HTTPBearer()
+optional_bearer_scheme = HTTPBearer(auto_error=False)
 
 
 # ─── Database session ────────────────────────────────────────────────────────────
@@ -38,6 +39,44 @@ async def get_current_user_payload(
             headers={"WWW-Authenticate": "Bearer"},
         )
     return payload
+
+
+async def get_ai_user_payload(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_bearer_scheme),
+) -> dict:
+    """
+    Authenticate student for AI Tutor.
+    Validates JWT when present. In development mode, allows guest/demo student
+    fallback if unauthenticated so frontend exploration is seamless.
+    """
+    from app.core.config import get_settings
+    settings = get_settings()
+
+    if credentials and credentials.credentials:
+        payload = decode_token(credentials.credentials)
+        if payload and payload.get("type") == "access":
+            return payload
+        if settings.app_env != "development":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+    if settings.app_env == "development":
+        return {
+            "sub": "usr_student_01",
+            "role": "STUDENT",
+            "email": "alex.johnson@example.com",
+            "name": "Alex Johnson",
+        }
+
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Authentication required to use AI Tutor",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
 
 
 # ─── Role guards ─────────────────────────────────────────────────────────────────

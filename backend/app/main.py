@@ -72,6 +72,7 @@ API_PREFIX = "/api/v1"
 app.include_router(auth_router, prefix=API_PREFIX)
 app.include_router(courses_router, prefix=API_PREFIX)
 app.include_router(ai_router, prefix=API_PREFIX)
+app.include_router(ai_router, prefix="/api")  # Support direct /api/ai/chat
 app.include_router(router_users, prefix=API_PREFIX)
 app.include_router(router_lessons, prefix=API_PREFIX)
 app.include_router(router_quizzes, prefix=API_PREFIX)

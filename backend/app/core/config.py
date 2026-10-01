@@ -63,7 +63,8 @@ class Settings(BaseSettings):
     # ─── AI ──────────────────────────────────────────────────────────────────────
     gemini_api_key: str = ""
     openai_api_key: str = ""
-    ai_provider: str = "gemini"  # gemini | openai
+    openai_model: str = "gpt-4o-mini"
+    ai_provider: str = "openai"  # openai | gemini
 
     # ─── Storage ─────────────────────────────────────────────────────────────────
     storage_provider: str = "cloudinary"
