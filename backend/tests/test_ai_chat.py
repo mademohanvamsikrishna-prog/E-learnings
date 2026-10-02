@@ -70,7 +70,7 @@ class TestAIChatEndpoints(unittest.TestCase):
     # ── Test 3: Missing / Unconfigured OpenAI API Key ───────────────────────────
     def test_missing_api_key_error_handling(self):
         """When OPENAI_API_KEY is empty, return a safe 503 without leaking details."""
-        with patch("app.services.openai_service.settings.openai_api_key", ""):
+        with patch.dict("os.environ", {"OPENAI_API_KEY": ""}), patch("app.services.openai_service.load_dotenv"), patch("app.services.openai_service.settings.openai_api_key", ""):
             res = self.client.post("/api/v1/ai/chat", json={"message": "What is Python?"})
             self.assertEqual(res.status_code, 503)
             data = res.json()

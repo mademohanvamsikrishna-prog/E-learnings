@@ -13,8 +13,8 @@ from app.schemas.ai import (
     AIStudyPlanRequest,
     AIGenericResponse,
 )
-from app.services.ai_service import AIService
 from app.services.openai_service import (
+    OpenAIService,
     OpenAIRateLimitError,
     OpenAIConfigError,
     OpenAIAuthError,
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ai", tags=["AI"])
 
 # One shared service instance per application lifecycle
-_ai_service = AIService()
+_ai_service = OpenAIService()
 
 
 @router.post("/chat", response_model=AIChatResponse)
