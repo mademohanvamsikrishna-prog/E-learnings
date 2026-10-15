@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Column, String, Text, Enum, ForeignKey, Float, Boolean
+from sqlalchemy import Column, String, Text, Enum, ForeignKey, Float, Boolean, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -29,6 +29,11 @@ class Enrollment(Base):
 
     student = relationship("User", back_populates="enrollments")
     course = relationship("Course", back_populates="enrollments")
+
+    # BUG-16 fix: prevent a student from enrolling in the same course more than once
+    __table_args__ = (
+        UniqueConstraint("student_id", "course_id", name="uq_enrollment_student_course"),
+    )
 
     def __repr__(self) -> str:
         return f"<Enrollment student={self.student_id} course={self.course_id}>"

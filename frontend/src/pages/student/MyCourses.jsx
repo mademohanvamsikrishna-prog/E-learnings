@@ -1,145 +1,153 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  BookOpen,
-  Search,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
-  Award,
-  PlayCircle,
-  Filter,
+  BookOpen, Search, CheckCircle2, Clock, ArrowRight,
+  Award, PlayCircle, Star, TrendingUp, Filter,
 } from 'lucide-react'
 import { enrolledCourses } from '@/data/mockData'
-import { CourseProgress, SearchBar, Button, Badge } from '@/components'
+
+// ─── Dark shared components ───────────────────────────────────────────────────
+function DarkProgress({ value, color = 'from-purple-500 to-indigo-500' }) {
+  return (
+    <div className="w-full h-1.5 bg-white/8 rounded-full overflow-hidden">
+      <div className={`h-full rounded-full bg-gradient-to-r ${color} transition-all`} style={{ width: `${value}%` }} />
+    </div>
+  )
+}
+
+const TABS = [
+  { key: 'all',         label: 'All Courses' },
+  { key: 'in-progress', label: 'In Progress' },
+  { key: 'completed',   label: 'Completed' },
+]
 
 export function MyCourses() {
-  const [activeTab, setActiveTab] = useState('all') // 'all' | 'in-progress' | 'completed'
-  const [searchQuery, setSearchQuery] = useState('')
+  const [activeTab, setActiveTab]       = useState('all')
+  const [searchQuery, setSearchQuery]   = useState('')
 
-  const filteredCourses = enrolledCourses.filter((course) => {
-    // Tab filter
-    if (activeTab === 'in-progress' && course.progress === 100) return false
-    if (activeTab === 'completed' && course.progress < 100) return false
-
-    // Search query
+  const filtered = enrolledCourses.filter((c) => {
+    if (activeTab === 'in-progress' && c.progress === 100) return false
+    if (activeTab === 'completed'   && c.progress <   100) return false
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
-      const matchTitle = course.title.toLowerCase().includes(q)
-      const matchInstructor = course.instructor.toLowerCase().includes(q)
-      const matchCategory = course.category.toLowerCase().includes(q)
-      if (!matchTitle && !matchInstructor && !matchCategory) return false
+      return c.title.toLowerCase().includes(q) || c.instructor.toLowerCase().includes(q) || c.category.toLowerCase().includes(q)
     }
-
     return true
   })
 
-  const inProgressCount = enrolledCourses.filter((c) => c.progress < 100).length
-  const completedCount = enrolledCourses.filter((c) => c.progress === 100).length
+  const counts = {
+    all:         enrolledCourses.length,
+    'in-progress': enrolledCourses.filter((c) => c.progress < 100).length,
+    completed:   enrolledCourses.filter((c) => c.progress === 100).length,
+  }
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
-      {/* ─── Top Header & Search ────────────────────────────────────────────────── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200">
+    <div className="space-y-6 pb-12">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-white/6">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold mb-2">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Learning Hub</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold mb-2">
+            <BookOpen className="w-3.5 h-3.5" /> Learning Hub
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-            My Courses
-          </h1>
-          <p className="text-slate-500 text-xs sm:text-sm mt-1">
-            Manage your active enrollments and pick up where you left off.
-          </p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">My Courses</h1>
+          <p className="text-white/40 text-xs mt-1">Manage your enrollments and pick up where you left off.</p>
         </div>
-
-        <div className="w-full md:w-80">
-          <SearchBar
+        {/* Search */}
+        <div className="relative w-full md:w-72">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-white/25 pointer-events-none" />
+          <input
+            type="text"
             value={searchQuery}
-            onChange={setSearchQuery}
-            onClear={() => setSearchQuery('')}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search enrolled courses..."
-            size="md"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white/5 border border-white/8 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/40 transition-colors"
           />
         </div>
       </div>
 
-      {/* ─── Tabs Filter Bar ────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-4 border-b border-slate-200">
+      {/* ── Tab bar ────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between border-b border-white/6">
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => setActiveTab('all')}
-            className={`pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'all'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <span>All Courses</span>
-            <span className="text-2xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold">
-              {enrolledCourses.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('in-progress')}
-            className={`pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'in-progress'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <span>In Progress</span>
-            <span className="text-2xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 font-bold">
-              {inProgressCount}
-            </span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('completed')}
-            className={`pb-3 px-3 text-xs sm:text-sm font-semibold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'completed'
-                ? 'border-indigo-600 text-indigo-600'
-                : 'border-transparent text-slate-500 hover:text-slate-900'
-            }`}
-          >
-            <span>Completed</span>
-            <span className="text-2xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold">
-              {completedCount}
-            </span>
-          </button>
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={`pb-3 px-4 text-sm font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
+                activeTab === t.key
+                  ? 'border-purple-500 text-purple-400'
+                  : 'border-transparent text-white/35 hover:text-white/70'
+              }`}
+            >
+              {t.label}
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                activeTab === t.key
+                  ? 'bg-purple-500/20 text-purple-300'
+                  : 'bg-white/6 text-white/30'
+              }`}>
+                {counts[t.key]}
+              </span>
+            </button>
+          ))}
         </div>
-
         <Link to="/explore">
-          <Button variant="outline" size="sm" icon={ArrowRight} iconPosition="right" className="hidden sm:inline-flex">
-            Browse More
-          </Button>
+          <button className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/8 bg-white/4 text-xs font-bold text-white/50 hover:bg-white/8 hover:text-white/80 transition-all cursor-pointer mb-2">
+            Browse More <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </Link>
       </div>
 
-      {/* ─── Enrolled Courses List ──────────────────────────────────────────────── */}
-      {filteredCourses.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-4">
-          <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
-            <BookOpen className="w-6 h-6" />
+      {/* ── Course list ─────────────────────────────────────────────────── */}
+      {filtered.length === 0 ? (
+        <div className="rounded-2xl border border-white/8 bg-white/4 p-14 text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center mx-auto">
+            <BookOpen className="w-7 h-7 text-purple-400" />
           </div>
-          <h3 className="text-base font-bold text-slate-900">No courses found</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            {searchQuery
-              ? `No enrolled courses match "${searchQuery}".`
-              : activeTab === 'completed'
-              ? 'You have not completed any courses yet. Keep learning!'
-              : 'You do not have any enrolled courses in this view.'}
+          <h3 className="text-base font-bold text-white">No courses found</h3>
+          <p className="text-xs text-white/35 max-w-xs mx-auto">
+            {searchQuery ? `No results for "${searchQuery}".` : 'Nothing in this view yet.'}
           </p>
           <Link to="/explore">
-            <Button size="sm">Explore New Courses</Button>
+            <button className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold cursor-pointer hover:opacity-90 transition-all">
+              Explore Courses
+            </button>
           </Link>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredCourses.map((course) => (
-            <CourseProgress key={course.id} course={course} />
+        <div className="space-y-3">
+          {filtered.map((c) => (
+            <Link to={`/learn/${c.id}`} key={c.id} className="block group">
+              <div className="flex gap-4 p-4 rounded-2xl border border-white/6 bg-white/3 hover:border-purple-500/25 hover:bg-purple-500/5 transition-all duration-200">
+                <img
+                  src={c.thumbnail}
+                  alt={c.title}
+                  className="w-20 h-14 rounded-xl object-cover border border-white/8 flex-none group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">{c.category}</span>
+                      <h4 className="text-sm font-bold text-white/80 group-hover:text-white transition-colors truncate">{c.title}</h4>
+                      <p className="text-[10px] text-white/30 mt-0.5">by {c.instructor} · {c.completedLessons}/{c.totalLessons} lessons</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <div className="text-lg font-extrabold text-purple-400">{c.progress}%</div>
+                      <div className="flex items-center gap-1 justify-end">
+                        <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                        <span className="text-[10px] font-bold text-amber-400">{c.rating}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-3 flex items-center gap-3">
+                    <div className="flex-1">
+                      <DarkProgress value={c.progress} />
+                    </div>
+                    <button className="flex-none flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600/30 border border-purple-500/25 text-purple-300 text-[11px] font-bold hover:bg-purple-600/50 transition-colors cursor-pointer">
+                      <PlayCircle className="w-3.5 h-3.5" /> Resume
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </Link>
           ))}
         </div>
       )}

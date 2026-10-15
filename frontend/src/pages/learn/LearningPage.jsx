@@ -24,9 +24,10 @@ import {
 } from 'lucide-react'
 import { courses, activeLessonData } from '@/data/mockData'
 import { Button, ProgressBar, Badge, Modal, Input } from '@/components'
+import { aiService } from '@/services/aiService'
 
 export function LearningPage() {
-  const { courseId } = useParams()
+  const { courseId, lessonId } = useParams()
   const navigate = useNavigate()
   const course = courses.find((c) => c.id === courseId) || courses[0]
 
@@ -57,7 +58,8 @@ export function LearningPage() {
     }
   }
 
-  const handleAskAI = (e) => {
+  // BUG-09: replaced setTimeout mock with real aiService.askTutor() call
+  const handleAskAI = async (e) => {
     e.preventDefault()
     if (!aiQuestion.trim()) return
 
@@ -66,14 +68,19 @@ export function LearningPage() {
     setAiConversation((prev) => [...prev, { sender: 'user', text: userText }])
     setAiLoading(true)
 
-    setTimeout(() => {
-      let reply = `That's a key question about polymorphism! In Java 21, when an overridden method is called, the JVM looks up the target implementation via the object's vtable (virtual method table) in heap memory at runtime. This guarantees runtime dynamic dispatch.`
-      if (userText.toLowerCase().includes('example')) {
-        reply = `Here is a clear snippet demonstrating runtime polymorphism:\n\n\`\`\`java\nAnimal myDog = new Dog();\nmyDog.makeSound(); // Invokes Dog's overridden makeSound() at runtime!\n\`\`\``
-      }
-      setAiConversation((prev) => [...prev, { sender: 'ai', text: reply }])
+    try {
+      // courseId and lessonId come from useParams() at the top of the component
+      const result = await aiService.askTutor(userText, lessonId || null, courseId || null)
+      setAiConversation((prev) => [...prev, { sender: 'ai', text: result.answer }])
+    } catch (err) {
+      const msg =
+        err?.response?.data?.detail ||
+        err?.response?.data?.message ||
+        'AI Tutor temporarily unavailable. Please try again.'
+      setAiConversation((prev) => [...prev, { sender: 'ai', text: `⚠️ ${msg}` }])
+    } finally {
       setAiLoading(false)
-    }, 600)
+    }
   }
 
   return (

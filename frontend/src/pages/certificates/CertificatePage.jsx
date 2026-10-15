@@ -1,211 +1,193 @@
 import { useState } from 'react'
 import {
-  Award,
-  Download,
-  Share2,
-  ExternalLink,
-  CheckCircle2,
-  Calendar,
-  ShieldCheck,
-  Sparkles,
-  QrCode,
-  GraduationCap,
+  Award, Download, Share2, ExternalLink, CheckCircle2,
+  ShieldCheck, Sparkles, GraduationCap, Copy, Check,
 } from 'lucide-react'
 import { mockCertificates, mockUser } from '@/data/mockData'
-import { Button, Card, Badge, Modal } from '@/components'
-import { Card3DTilt } from '@/components/animations'
 
 export function CertificatePage() {
   const [selectedCertId, setSelectedCertId] = useState(mockCertificates[0].id)
-  const [copySuccess, setCopySuccess] = useState(false)
-  const [fullscreenModal, setFullscreenModal] = useState(false)
+  const [copySuccess,    setCopySuccess]    = useState(false)
 
-  const activeCert = mockCertificates.find((c) => c.id === selectedCertId) || mockCertificates[0]
+  const cert = mockCertificates.find((c) => c.id === selectedCertId) || mockCertificates[0]
 
-  const handleCopyLink = () => {
-    navigator.clipboard?.writeText(activeCert.verificationUrl)
+  const handleCopy = () => {
+    navigator.clipboard?.writeText(cert.verificationUrl)
     setCopySuccess(true)
     setTimeout(() => setCopySuccess(false), 2000)
   }
 
   return (
-    <div className="space-y-8 animate-fade-in pb-16">
-      {/* ─── Header ─────────────────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-[#E8E2D5]">
+    <div className="space-y-6 pb-16">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-white/6">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFFDF7] text-[#12372A] border border-[#E8E2D5] text-xs font-semibold mb-2">
-            <Award className="w-3.5 h-3.5 text-[#E89B5A]" />
-            <span>Official Credentials</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold mb-2">
+            <Award className="w-3.5 h-3.5" /> Official Credentials
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#12372A] tracking-tight">
-            My Certificates
-          </h1>
-          <p className="text-[#68756D] text-xs sm:text-sm mt-1">
-            Verified proof of your technical curriculum completion and project mastery.
-          </p>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">My Certificates</h1>
+          <p className="text-white/40 text-xs mt-1">Verified proof of your technical curriculum completion.</p>
         </div>
-
-        <div className="flex items-center gap-2">
-          <Badge variant="success" size="lg" icon={CheckCircle2}>
-            {mockCertificates.length} Verified Credentials
-          </Badge>
+        <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span className="text-sm font-bold text-emerald-300">{mockCertificates.length} Verified Credentials</span>
         </div>
       </div>
 
-      {/* ─── Main Layout: Certificate Canvas Preview & Certificates List ─────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Certificate Switcher (Left 1 Col) */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold text-[#68756D] uppercase tracking-wider px-1">
-            Earned Certificates ({mockCertificates.length})
-          </h3>
+      {/* ── Main layout ─────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
-          {mockCertificates.map((cert) => {
-            const isSelected = cert.id === selectedCertId
+        {/* Left: cert switcher */}
+        <div className="space-y-2.5">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/20 px-1">
+            Earned ({mockCertificates.length})
+          </p>
+          {mockCertificates.map((c) => {
+            const isSelected = c.id === selectedCertId
             return (
               <div
-                key={cert.id}
-                onClick={() => setSelectedCertId(cert.id)}
-                className={`p-4 rounded-xl border transition-all cursor-pointer select-none ${
+                key={c.id}
+                onClick={() => setSelectedCertId(c.id)}
+                className={`p-4 rounded-2xl border transition-all cursor-pointer select-none ${
                   isSelected
-                    ? 'border-[#2F7D62] bg-[#FFFDF7] shadow-sm ring-2 ring-[#2F7D62]/20'
-                    : 'border-[#E8E2D5] bg-white hover:border-[#2F7D62] hover:bg-[#FFFDF7]'
+                    ? 'border-amber-500/40 bg-amber-500/8 shadow-[0_0_20px_rgba(245,158,11,0.1)]'
+                    : 'border-white/6 bg-white/3 hover:border-white/12 hover:bg-white/5'
                 }`}
               >
                 <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <Badge variant="primary" size="sm">
-                    {cert.grade}
-                  </Badge>
-                  <span className="text-2xs font-mono text-[#8E9C94]">{cert.issueDate}</span>
-                </div>
-                <h4 className="text-sm font-bold text-[#12372A] leading-snug">
-                  {cert.courseTitle}
-                </h4>
-                <p className="text-2xs text-[#68756D] mt-1">
-                  Instructor: {cert.instructor}
-                </p>
-                <div className="mt-3 flex items-center justify-between text-2xs text-[#2F7D62] font-semibold pt-2 border-t border-[#E8E2D5]/70">
-                  <span className="font-mono text-3xs text-[#8E9C94]">{cert.credentialId}</span>
-                  <span className="flex items-center gap-0.5">
-                    View Document <ExternalLink className="w-3 h-3" />
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                    isSelected
+                      ? 'bg-amber-500/15 text-amber-300 border-amber-500/25'
+                      : 'bg-white/6 text-white/40 border-white/10'
+                  }`}>
+                    {c.grade}
                   </span>
+                  <span className="text-[10px] text-white/25 font-mono">{c.issueDate}</span>
+                </div>
+                <h4 className="text-sm font-bold text-white/80 leading-snug">{c.courseTitle}</h4>
+                <p className="text-[10px] text-white/30 mt-1">by {c.instructor}</p>
+                <div className="mt-3 flex items-center justify-between text-[10px] text-purple-400 font-semibold pt-2 border-t border-white/6">
+                  <span className="font-mono text-white/20 text-[9px]">{c.credentialId}</span>
+                  <span className="flex items-center gap-0.5">View <ExternalLink className="w-3 h-3 ml-0.5" /></span>
                 </div>
               </div>
             )
           })}
         </div>
 
-        {/* Certificate Display Area (Right 2 Cols) */}
+        {/* Right: certificate display */}
         <div className="lg:col-span-2 space-y-4">
-          {/* Top Actions Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-[#E8E2D5] shadow-xs">
-            <div className="text-xs text-[#68756D]">
-              Credential ID: <strong className="font-mono text-[#12372A]">{activeCert.credentialId}</strong>
+
+          {/* Action bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl border border-white/8 bg-white/4">
+            <div className="text-xs text-white/35">
+              Credential ID: <strong className="font-mono text-white/60">{cert.credentialId}</strong>
             </div>
-
             <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleCopyLink}
-                icon={Share2}
+              <button
+                onClick={handleCopy}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-white/8 bg-white/5 text-xs font-bold text-white/60 hover:bg-white/10 hover:text-white transition-all cursor-pointer"
               >
-                {copySuccess ? 'Copied Link!' : 'Share to LinkedIn'}
-              </Button>
-
-              <Button
-                variant="primary"
-                size="sm"
-                icon={Download}
-                onClick={() => alert(`Downloading official PDF certificate for ${activeCert.courseTitle}`)}
+                {copySuccess ? <><Check className="w-3.5 h-3.5 text-emerald-400" /> Copied!</> : <><Copy className="w-3.5 h-3.5" /> Share to LinkedIn</>}
+              </button>
+              <button
+                onClick={() => alert(`Downloading ${cert.courseTitle} PDF`)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold hover:opacity-90 transition-all cursor-pointer shadow-[0_4px_16px_rgba(124,58,237,0.3)]"
               >
-                Download PDF
-              </Button>
+                <Download className="w-3.5 h-3.5" /> Download PDF
+              </button>
             </div>
           </div>
 
-          {/* Premium 3D Certificate Visual Document Container */}
-          <Card3DTilt maxTilt={4} className="rounded-3xl">
-            <div className="relative bg-[#FFFDF7] rounded-3xl border-8 border-[#EFE9DC] p-8 sm:p-12 shadow-2xl shadow-[#12372A]/10 overflow-hidden text-center text-[#17231D]">
-              {/* Ornate Inner Border */}
-              <div className="absolute inset-3 border-2 border-[#E8E2D5] rounded-2xl pointer-events-none" />
+          {/* Certificate document — parchment on dark */}
+          <div className="relative">
+            {/* Outer dark glow ring */}
+            <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-amber-500/20 via-purple-500/10 to-indigo-500/20 blur-lg" />
 
-              {/* Corner Decorative Dots */}
-              <div className="absolute top-6 left-6 w-3 h-3 border-t-2 border-l-2 border-[#E89B5A]" />
-              <div className="absolute top-6 right-6 w-3 h-3 border-t-2 border-r-2 border-[#E89B5A]" />
-              <div className="absolute bottom-6 left-6 w-3 h-3 border-b-2 border-l-2 border-[#E89B5A]" />
-              <div className="absolute bottom-6 right-6 w-3 h-3 border-b-2 border-r-2 border-[#E89B5A]" />
+            <div className="relative rounded-3xl overflow-hidden border-4 border-amber-500/20 bg-[#0e0c09] shadow-2xl">
+              {/* Parchment gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-900/10 via-transparent to-purple-900/10" />
 
-              {/* Header Brand */}
-              <div className="relative z-10 flex flex-col items-center">
-                <div className="w-14 h-14 rounded-2xl bg-[#12372A] text-white flex items-center justify-center shadow-md mb-3">
-                  <GraduationCap className="w-8 h-8 text-[#E89B5A]" />
-                </div>
-                <span className="text-xs font-mono tracking-widest text-[#2F7D62] font-bold uppercase">
-                  EDUSPIRE 3D ACADEMY OF TECHNOLOGY
-                </span>
-                <h2 className="text-2xl sm:text-4xl font-extrabold text-[#12372A] font-serif tracking-tight mt-3">
-                  Certificate of Completion
-                </h2>
-                <p className="text-xs text-[#68756D] uppercase tracking-widest mt-1">
-                  This acknowledges that
-                </p>
-              </div>
+              {/* Inner ornate border */}
+              <div className="absolute inset-4 border border-amber-500/10 rounded-2xl pointer-events-none" />
 
-              {/* Recipient Name */}
-              <div className="relative z-10 my-6">
-                <h3 className="text-2xl sm:text-3xl font-extrabold text-[#12372A] font-serif border-b-2 border-[#E8E2D5] inline-block px-8 pb-2">
-                  {activeCert.studentName || mockUser.name}
-                </h3>
-              </div>
+              {/* Corner ornaments */}
+              {[['top-5 left-5', 'border-t-2 border-l-2'], ['top-5 right-5', 'border-t-2 border-r-2'],
+                ['bottom-5 left-5', 'border-b-2 border-l-2'], ['bottom-5 right-5', 'border-b-2 border-r-2']].map(([pos, border], i) => (
+                <div key={i} className={`absolute ${pos} w-5 h-5 ${border} border-amber-500/30`} />
+              ))}
 
-              {/* Curriculum description */}
-              <div className="relative z-10 max-w-xl mx-auto space-y-2 text-xs sm:text-sm text-[#68756D] leading-relaxed">
-                <p>
-                  has successfully passed all formal assessments, practical assignments, and hands-on coding challenges to master the curriculum for:
-                </p>
-                <h4 className="text-base sm:text-lg font-bold text-[#12372A] font-serif pt-1">
-                  {activeCert.courseTitle}
-                </h4>
-                <p className="text-2xs text-[#2F7D62] font-semibold pt-1">
-                  Graduated with Distinction: {activeCert.grade}
-                </p>
-              </div>
+              {/* Content */}
+              <div className="relative z-10 p-8 sm:p-12 text-center">
 
-              {/* Signatures & Seal Grid */}
-              <div className="relative z-10 mt-10 pt-8 border-t border-[#E8E2D5] grid grid-cols-1 sm:grid-cols-3 items-center gap-6">
-                {/* Issue Date */}
-                <div className="text-center sm:text-left">
-                  <p className="font-semibold text-xs text-[#12372A]">{activeCert.issueDate}</p>
-                  <p className="text-2xs text-[#8E9C94] uppercase tracking-wider mt-0.5">Date of Issue</p>
+                {/* Brand */}
+                <div className="flex flex-col items-center mb-6">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500/30 to-amber-600/20 border border-amber-500/30 flex items-center justify-center shadow-lg mb-3">
+                    <GraduationCap className="w-8 h-8 text-amber-400" />
+                  </div>
+                  <span className="text-[10px] font-black tracking-[0.25em] text-amber-400/70 uppercase">
+                    EduSpire PRO · Academy of Technology
+                  </span>
                 </div>
 
-                {/* Gold Official Seal */}
-                <div className="flex flex-col items-center">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-400 via-amber-300 to-amber-500 text-amber-950 flex flex-col items-center justify-center shadow-md border-2 border-amber-200/90 font-serif">
-                    <ShieldCheck className="w-6 h-6 text-amber-950" />
-                    <span className="text-3xs font-extrabold uppercase tracking-tighter">VERIFIED</span>
+                {/* Title */}
+                <div className="mb-6">
+                  <h2 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                    Certificate of Completion
+                  </h2>
+                  <p className="text-xs text-white/30 uppercase tracking-widest mt-2">This certifies that</p>
+                </div>
+
+                {/* Recipient */}
+                <div className="my-6">
+                  <div className="inline-block border-b-2 border-amber-500/30 px-8 pb-2">
+                    <h3 className="text-2xl sm:text-3xl font-extrabold text-amber-300" style={{ fontFamily: 'Georgia, serif' }}>
+                      {cert.studentName || mockUser?.name || 'Alex Johnson'}
+                    </h3>
                   </div>
                 </div>
 
-                {/* Instructor Signature */}
-                <div className="text-center sm:text-right">
-                  <p className="font-serif font-bold text-[#12372A] text-xs italic">
-                    {activeCert.instructor}
-                  </p>
-                  <p className="text-2xs text-[#8E9C94] uppercase tracking-wider mt-0.5">
-                    Authorized Instructor Signature
-                  </p>
+                {/* Description */}
+                <div className="max-w-lg mx-auto space-y-2 text-sm text-white/40 leading-relaxed mb-6">
+                  <p>has successfully completed all assessments, projects, and challenges for:</p>
+                  <h4 className="text-base sm:text-lg font-bold text-white/80" style={{ fontFamily: 'Georgia, serif' }}>
+                    {cert.courseTitle}
+                  </h4>
+                  <p className="text-[11px] text-emerald-400 font-semibold">Graduated with Distinction · {cert.grade}</p>
+                </div>
+
+                {/* Footer row */}
+                <div className="mt-8 pt-6 border-t border-white/6 grid grid-cols-3 items-center gap-6">
+                  <div className="text-left">
+                    <p className="text-xs font-bold text-white/60">{cert.issueDate}</p>
+                    <p className="text-[9px] text-white/20 uppercase tracking-wider mt-0.5">Date of Issue</p>
+                  </div>
+
+                  <div className="flex flex-col items-center">
+                    <div className="w-16 h-16 rounded-full flex flex-col items-center justify-center shadow-xl border-2 border-amber-400/40"
+                      style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
+                      <ShieldCheck className="w-6 h-6 text-amber-950" />
+                      <span className="text-[8px] font-black text-amber-950 uppercase tracking-tighter">VERIFIED</span>
+                    </div>
+                    <span className="text-[9px] text-white/20 mt-1.5">Official Seal</span>
+                  </div>
+
+                  <div className="text-right">
+                    <p className="text-xs font-bold text-white/60 italic" style={{ fontFamily: 'Georgia, serif' }}>
+                      {cert.instructor}
+                    </p>
+                    <p className="text-[9px] text-white/20 uppercase tracking-wider mt-0.5">Instructor Signature</p>
+                  </div>
+                </div>
+
+                {/* Verification URL */}
+                <div className="mt-6 pt-4 border-t border-white/4 flex flex-col sm:flex-row items-center justify-between text-[9px] text-white/20 gap-2">
+                  <span className="font-mono">{cert.verificationUrl}</span>
+                  <span>Cryptographically signed · Tamper-proof</span>
                 </div>
               </div>
-
-              {/* Verification Link & ID Footer */}
-              <div className="relative z-10 mt-8 pt-4 border-t border-[#E8E2D5] flex flex-col sm:flex-row items-center justify-between text-2xs text-[#8E9C94] gap-2">
-                <span className="font-mono">Verification: {activeCert.verificationUrl}</span>
-                <span>Valid cryptographically signed document</span>
-              </div>
             </div>
-          </Card3DTilt>
+          </div>
         </div>
       </div>
     </div>

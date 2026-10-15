@@ -14,7 +14,9 @@ class Settings(BaseSettings):
     app_port: int = 8000
 
     # ─── Security ────────────────────────────────────────────────────────────────
-    secret_key: str = "change-this-secret-key"
+    # BUG-03 fix: no default — startup fails fast with a clear error if SECRET_KEY
+    # is missing from .env, preventing forgeable JWTs in any environment.
+    secret_key: str
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     refresh_token_expire_days: int = 7

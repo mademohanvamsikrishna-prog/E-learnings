@@ -41,7 +41,7 @@ class Course(Base):
 
     # ─── Foreign keys ────────────────────────────────────────────────────────────
     instructor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    category_id = Column(UUID(as_uuid=True), ForeignKey("categorys.id"), nullable=True)
+    category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id"), nullable=True)
 
     # ─── Relationships ────────────────────────────────────────────────────────────
     instructor = relationship("User", back_populates="courses")
@@ -56,7 +56,7 @@ class Course(Base):
 class Category(Base):
     """Course category / subject area."""
 
-    __tablename__ = "categorys"  # auto-named by Base; kept as is for consistency
+    __tablename__ = "categories"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), unique=True, nullable=False)

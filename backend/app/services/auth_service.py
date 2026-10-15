@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import hash_password, verify_password, create_access_token, create_refresh_token
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.auth import LoginRequest, TokenResponse
 from app.schemas.user import UserCreate
 
@@ -24,12 +24,17 @@ class AuthService:
         if result.scalar_one_or_none():
             raise ValueError("This username is already taken.")
 
+        # BUG-01 fix: role is ALWAYS STUDENT for public registration.
+        # Elevated roles (INSTRUCTOR, ADMIN) must be assigned by an admin via a
+        # separate privileged endpoint — never accepted from the client payload.
+        role_enum = UserRole.STUDENT
+
         user = User(
             email=data.email,
             username=data.username,
             full_name=data.full_name,
             hashed_password=hash_password(data.password),
-            role=data.role or "STUDENT",
+            role=role_enum,
         )
         db.add(user)
         await db.flush()  # get the id before commit

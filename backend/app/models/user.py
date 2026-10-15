@@ -35,6 +35,8 @@ class User(Base):
     courses = relationship("Course", back_populates="instructor", lazy="noload")
     quiz_attempts = relationship("QuizAttempt", back_populates="student", lazy="noload")
     certificates = relationship("Certificate", back_populates="student", lazy="noload")
+    # BUG-18 fix: bidirectional back-reference for Progress.student relationship
+    progress_records = relationship("Progress", back_populates="student", lazy="noload")
 
     def __repr__(self) -> str:
         return f"<User {self.username} ({self.role})>"

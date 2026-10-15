@@ -39,10 +39,23 @@ settings = get_settings()
 # ─── Lifespan (startup / shutdown) ───────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # ── Startup ────────────────────────────────────────────────────────────
     print(f"[START] {settings.app_name} starting in [{settings.app_env}] mode")
+
+    # BUG-04 fix: warn loudly when dev guest AI bypass could be reachable
+    if settings.app_env != "development":
+        print(
+            "[SECURITY] Running in PRODUCTION mode — "
+            "guest AI bypass is disabled. JWT required for all AI endpoints."
+        )
+    else:
+        print(
+            "[WARNING] DEV MODE: Unauthenticated AI requests are accepted with a "
+            "guest identity. Set APP_ENV=production to enforce JWT on all AI endpoints."
+        )
+
     yield
-    # Shutdown
+    # ── Shutdown
     print("[STOP] Application shutdown")
 
 
@@ -72,7 +85,6 @@ API_PREFIX = "/api/v1"
 app.include_router(auth_router, prefix=API_PREFIX)
 app.include_router(courses_router, prefix=API_PREFIX)
 app.include_router(ai_router, prefix=API_PREFIX)
-app.include_router(ai_router, prefix="/api")  # Support direct /api/ai/chat
 app.include_router(router_users, prefix=API_PREFIX)
 app.include_router(router_lessons, prefix=API_PREFIX)
 app.include_router(router_quizzes, prefix=API_PREFIX)

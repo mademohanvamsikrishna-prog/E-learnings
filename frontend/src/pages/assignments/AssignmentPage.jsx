@@ -1,329 +1,262 @@
 import { useState } from 'react'
 import {
-  FileText,
-  UploadCloud,
-  CheckCircle2,
-  Clock,
-  Download,
-  AlertCircle,
-  Award,
-  Check,
-  Calendar,
-  FileCheck,
-  Send,
-  Trash2,
+  FileText, UploadCloud, CheckCircle2, Clock, Download,
+  Award, Calendar, FileCheck, Send, Trash2, X,
 } from 'lucide-react'
 import { mockAssignments } from '@/data/mockData'
-import { Button, Card, Badge, Modal } from '@/components'
+
+// ─── Status badge ─────────────────────────────────────────────────────────────
+function StatusPill({ status }) {
+  const map = {
+    Submitted:   { cls: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/25',  dot: 'bg-indigo-400' },
+    Graded:      { cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/25', dot: 'bg-emerald-400' },
+    'In Progress':{ cls: 'bg-amber-500/15 text-amber-300 border-amber-500/25',   dot: 'bg-amber-400' },
+    Late:        { cls: 'bg-red-500/15 text-red-300 border-red-500/25',           dot: 'bg-red-400' },
+  }
+  const s = map[status] || { cls: 'bg-white/8 text-white/30 border-white/10', dot: 'bg-white/30' }
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border text-[10px] font-bold ${s.cls}`}>
+      <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+      {status === 'Graded' ? 'Graded (96/100)' : status}
+    </span>
+  )
+}
+
+// ─── Feedback Modal ───────────────────────────────────────────────────────────
+function FeedbackModal({ asg, onClose }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#141414] p-6 space-y-4 shadow-2xl">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="text-base font-extrabold text-white">Instructor Feedback</h3>
+            <p className="text-xs text-white/40 mt-0.5">{asg.title}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/8 transition-all cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="p-4 rounded-2xl bg-emerald-500/8 border border-emerald-500/20 flex items-center justify-between">
+          <div>
+            <p className="text-xs text-emerald-400 font-semibold">Final Grade</p>
+            <div className="text-3xl font-extrabold text-white mt-0.5">{asg.grade}<span className="text-lg text-white/30">/{asg.points}</span></div>
+          </div>
+          <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+            <Award className="w-7 h-7 text-emerald-400" />
+          </div>
+        </div>
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/25 mb-2">Notes from {asg.feedback?.instructor}</p>
+          <p className="text-sm text-white/60 bg-white/4 p-4 rounded-xl border border-white/6 leading-relaxed italic">
+            "{asg.feedback?.comments}"
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export function AssignmentPage() {
-  const [selectedAsgId, setSelectedAsgId] = useState(mockAssignments[0].id)
-  const [selectedFile, setSelectedFile] = useState(null)
-  const [isUploading, setIsUploading] = useState(false)
-  const [uploadSuccess, setUploadSuccess] = useState(false)
-  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false)
+  const [selectedAsgId, setSelectedAsgId]   = useState(mockAssignments[0].id)
+  const [selectedFile, setSelectedFile]     = useState(null)
+  const [isUploading, setIsUploading]       = useState(false)
+  const [uploadSuccess, setUploadSuccess]   = useState(false)
+  const [feedbackOpen, setFeedbackOpen]     = useState(false)
 
-  const activeAssignment = mockAssignments.find((a) => a.id === selectedAsgId) || mockAssignments[0]
+  const active = mockAssignments.find((a) => a.id === selectedAsgId) || mockAssignments[0]
 
-  const handleFileChange = (e) => {
-    if (e.target.files?.[0]) {
-      setSelectedFile(e.target.files[0])
-    }
-  }
+  const handleFileChange = (e) => { if (e.target.files?.[0]) setSelectedFile(e.target.files[0]) }
 
   const handleUploadSubmit = () => {
     if (!selectedFile) return
     setIsUploading(true)
-    setTimeout(() => {
-      setIsUploading(false)
-      setUploadSuccess(true)
-    }, 800)
+    setTimeout(() => { setIsUploading(false); setUploadSuccess(true) }, 800)
   }
 
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'Submitted':
-        return <Badge variant="primary" size="sm" withDot>Submitted</Badge>
-      case 'Graded':
-        return <Badge variant="success" size="sm" withDot>Graded (96/100)</Badge>
-      case 'In Progress':
-        return <Badge variant="warning" size="sm" withDot>In Progress</Badge>
-      case 'Late':
-        return <Badge variant="danger" size="sm" withDot>Late</Badge>
-      default:
-        return <Badge variant="neutral" size="sm">Not Started</Badge>
-    }
-  }
+  const submitted = active.status === 'Submitted' || uploadSuccess
 
   return (
-    <div className="space-y-6 animate-fade-in pb-12">
-      {/* ─── Header ─────────────────────────────────────────────────────────────── */}
-      <div className="pb-6 border-b border-slate-200">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold mb-2">
-          <FileText className="w-3.5 h-3.5" />
-          <span>Hands-on Project Submissions</span>
+    <div className="space-y-6 pb-12">
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <div className="pb-5 border-b border-white/6">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold mb-2">
+          <FileText className="w-3.5 h-3.5" /> Project Submissions
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
-          Assignments
-        </h1>
-        <p className="text-slate-500 text-xs sm:text-sm mt-1">
-          Review requirements, download project boilerplates, and submit solutions for evaluation.
-        </p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">Assignments</h1>
+        <p className="text-white/40 text-xs mt-1">Review requirements, download boilerplates, and submit solutions.</p>
       </div>
 
-      {/* ─── Main Grid: Assignments List (Left) + Detail Workspace (Right) ──────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        {/* Left Column: Assignment Switcher List */}
-        <div className="space-y-3">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
-            All Assignments ({mockAssignments.length})
-          </h3>
+      {/* ── Main grid ──────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 items-start">
 
+        {/* Left: Assignment list */}
+        <div className="space-y-2.5">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/20 px-1">
+            All Assignments ({mockAssignments.length})
+          </p>
           {mockAssignments.map((asg) => {
             const isSelected = asg.id === selectedAsgId
             return (
               <div
                 key={asg.id}
-                onClick={() => {
-                  setSelectedAsgId(asg.id)
-                  setSelectedFile(null)
-                  setUploadSuccess(false)
-                }}
-                className={`p-4 rounded-xl border transition-all cursor-pointer select-none ${
+                onClick={() => { setSelectedAsgId(asg.id); setSelectedFile(null); setUploadSuccess(false) }}
+                className={`p-4 rounded-2xl border transition-all cursor-pointer select-none ${
                   isSelected
-                    ? 'border-indigo-600 bg-white shadow-xs ring-2 ring-indigo-500/20'
-                    : 'border-slate-200/80 bg-white hover:border-slate-300 hover:bg-slate-50'
+                    ? 'border-purple-500/40 bg-purple-500/8 shadow-[0_0_20px_rgba(124,58,237,0.1)]'
+                    : 'border-white/6 bg-white/3 hover:border-white/12 hover:bg-white/5'
                 }`}
               >
                 <div className="flex items-center justify-between gap-2 mb-1.5">
-                  <span className="text-2xs font-semibold text-slate-400 truncate max-w-[140px]">
-                    {asg.courseTitle}
-                  </span>
-                  {getStatusBadge(asg.status)}
+                  <span className="text-[10px] text-white/30 truncate max-w-[130px]">{asg.courseTitle}</span>
+                  <StatusPill status={asg.status} />
                 </div>
-
-                <h4 className="text-xs font-bold text-slate-900 line-clamp-2">
-                  {asg.title}
-                </h4>
-
-                <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 text-2xs text-slate-500">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-slate-400" />
-                    {asg.dueDate.split('•')[0]}
-                  </span>
-                  <span className="font-semibold text-slate-700">{asg.points} pts</span>
+                <h4 className="text-xs font-bold text-white/80 line-clamp-2">{asg.title}</h4>
+                <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-white/6 text-[10px] text-white/30">
+                  <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{asg.dueDate.split('•')[0]}</span>
+                  <span className="font-bold text-white/50">{asg.points} pts</span>
                 </div>
               </div>
             )
           })}
         </div>
 
-        {/* Right 2 Columns: Detailed Assignment Workspace */}
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="space-y-6">
-            {/* Header info */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+        {/* Right: Detail workspace */}
+        <div className="lg:col-span-2 space-y-4">
+          <div className="rounded-2xl border border-white/8 bg-white/4 p-6 space-y-6">
+
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-white/6">
               <div>
-                <span className="text-2xs font-semibold text-indigo-600 uppercase tracking-wider block">
-                  {activeAssignment.courseTitle}
-                </span>
-                <h2 className="text-lg sm:text-xl font-bold text-slate-900 mt-0.5">
-                  {activeAssignment.title}
-                </h2>
-                <p className="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                  Due Date: <strong className="text-slate-700">{activeAssignment.dueDate}</strong>
+                <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider block mb-1">{active.courseTitle}</span>
+                <h2 className="text-lg sm:text-xl font-extrabold text-white">{active.title}</h2>
+                <p className="text-xs text-white/40 mt-1 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-white/25" />
+                  Due: <strong className="text-white/60">{active.dueDate}</strong>
                 </p>
               </div>
-
-              <div>{getStatusBadge(activeAssignment.status)}</div>
+              <StatusPill status={active.status} />
             </div>
 
             {/* Instructions */}
-            <div className="space-y-4">
-              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                Assignment Instructions
-              </h4>
-              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 text-xs sm:text-sm text-slate-700 leading-relaxed whitespace-pre-line font-sans">
-                {activeAssignment.instructions}
-              </div>
-            </div>
-
-            {/* Attachments / Starter Files */}
             <div>
-              <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">
-                Starter Attachments & Rubric
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between shadow-2xs">
-                  <div className="flex items-center gap-2.5 truncate">
-                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
-                      <Download className="w-4 h-4" />
-                    </div>
-                    <div className="truncate">
-                      <p className="text-xs font-semibold text-slate-900 truncate">starter-template.zip</p>
-                      <p className="text-2xs text-slate-400">Project Skeleton • 3.2 MB</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="text-xs">
-                    Download
-                  </Button>
-                </div>
-
-                <div className="p-3 bg-white border border-slate-200 rounded-xl flex items-center justify-between shadow-2xs">
-                  <div className="flex items-center gap-2.5 truncate">
-                    <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-                      <FileCheck className="w-4 h-4" />
-                    </div>
-                    <div className="truncate">
-                      <p className="text-xs font-semibold text-slate-900 truncate">grading-rubric.pdf</p>
-                      <p className="text-2xs text-slate-400">PDF Guide • 450 KB</p>
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" className="text-xs">
-                    View
-                  </Button>
-                </div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/25 mb-2">Instructions</p>
+              <div className="p-4 bg-white/3 rounded-xl border border-white/6 text-xs text-white/60 leading-relaxed whitespace-pre-line font-mono">
+                {active.instructions}
               </div>
             </div>
 
-            {/* Current Submission State vs File Uploader */}
-            {activeAssignment.status === 'Submitted' || uploadSuccess ? (
-              <div className="p-5 bg-indigo-50/60 border border-indigo-200/80 rounded-2xl space-y-4">
+            {/* Attachments */}
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/25 mb-3">Starter Files & Rubric</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { name: 'starter-template.zip', meta: 'Project Skeleton · 3.2 MB', icon: Download, color: 'indigo', action: 'Download' },
+                  { name: 'grading-rubric.pdf',   meta: 'PDF Guide · 450 KB',        icon: FileCheck, color: 'purple', action: 'View' },
+                ].map((f) => {
+                  const Icon = f.icon
+                  return (
+                    <div key={f.name} className="p-3 rounded-xl border border-white/6 bg-white/3 flex items-center justify-between">
+                      <div className="flex items-center gap-2.5 truncate">
+                        <div className={`w-8 h-8 rounded-lg bg-${f.color}-500/15 border border-${f.color}-500/20 flex items-center justify-center shrink-0`}>
+                          <Icon className={`w-4 h-4 text-${f.color}-400`} />
+                        </div>
+                        <div className="truncate">
+                          <p className="text-xs font-semibold text-white/70 truncate">{f.name}</p>
+                          <p className="text-[10px] text-white/25">{f.meta}</p>
+                        </div>
+                      </div>
+                      <button className="text-[11px] font-bold text-purple-400 border border-purple-500/20 bg-purple-500/8 px-2.5 py-1.5 rounded-lg hover:bg-purple-500/20 transition-colors cursor-pointer">
+                        {f.action}
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Upload / Submitted state */}
+            {submitted ? (
+              <div className="p-5 bg-indigo-500/8 border border-indigo-500/20 rounded-2xl space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5 text-indigo-600 shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 text-indigo-400 shrink-0" />
                     <div>
-                      <h4 className="text-sm font-bold text-slate-900">Your Submission is Uploaded</h4>
-                      <p className="text-2xs text-slate-500">
-                        Submitted on {activeAssignment.submittedDate || 'Today at 4:32 PM'}
-                      </p>
+                      <h4 className="text-sm font-bold text-white">Submission Uploaded</h4>
+                      <p className="text-[10px] text-white/35">Submitted on {active.submittedDate || 'Today at 4:32 PM'}</p>
                     </div>
                   </div>
-
-                  <Badge variant="primary" size="sm">
+                  <span className="text-[10px] font-bold text-indigo-300 bg-indigo-500/15 border border-indigo-500/25 px-2.5 py-1 rounded-full">
                     {uploadSuccess ? 'Just Submitted' : 'Awaiting Grade'}
-                  </Badge>
+                  </span>
                 </div>
-
-                <div className="p-3.5 bg-white rounded-xl border border-indigo-100 flex items-center justify-between text-xs">
+                <div className="p-3 rounded-xl border border-indigo-500/15 bg-white/3 flex items-center justify-between text-xs">
                   <div className="flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-indigo-600" />
-                    <span className="font-semibold text-slate-900">
-                      {selectedFile?.name || activeAssignment.submittedFile || 'assignment-v1.zip'}
-                    </span>
-                    <span className="text-slate-400 text-2xs">
-                      ({activeAssignment.fileSize || '4.8 MB'})
-                    </span>
+                    <FileText className="w-4 h-4 text-indigo-400" />
+                    <span className="font-semibold text-white/70">{selectedFile?.name || active.submittedFile || 'assignment-v1.zip'}</span>
+                    <span className="text-white/25 text-[10px]">({active.fileSize || '4.8 MB'})</span>
                   </div>
-
-                  <span className="text-2xs font-semibold text-emerald-600">✓ Virus Scanned</span>
+                  <span className="text-[10px] font-bold text-emerald-400">✓ Scanned</span>
                 </div>
-
-                {activeAssignment.feedback && (
-                  <div className="pt-3 border-t border-indigo-100 flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-700">
-                      Instructor grade and feedback available
-                    </span>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      onClick={() => setFeedbackModalOpen(true)}
-                      icon={Award}
+                {active.feedback && (
+                  <div className="pt-3 border-t border-indigo-500/15 flex items-center justify-between">
+                    <span className="text-xs text-white/40">Instructor feedback available</span>
+                    <button
+                      onClick={() => setFeedbackOpen(true)}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold hover:opacity-90 transition-all cursor-pointer"
                     >
-                      View Feedback ({activeAssignment.grade}/100)
-                    </Button>
+                      <Award className="w-3.5 h-3.5" /> View Feedback ({active.grade}/100)
+                    </button>
                   </div>
                 )}
               </div>
             ) : (
-              /* Drag-and-drop file upload zone */
               <div className="space-y-4">
-                <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                  Upload Your Assignment Solution
-                </h4>
-
-                <div className="border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center hover:border-indigo-500 transition-colors bg-slate-50/50">
+                <p className="text-[10px] font-black uppercase tracking-widest text-white/25">Upload Solution</p>
+                <label htmlFor="assignment-file" className="block border-2 border-dashed border-white/10 rounded-2xl p-8 text-center hover:border-purple-500/40 hover:bg-purple-500/3 transition-all cursor-pointer">
                   <input
-                    type="file"
-                    id="assignment-file"
+                    id="assignment-file" type="file"
                     className="hidden"
                     onChange={handleFileChange}
                     accept=".zip,.tar.gz,.pdf,.java,.py"
                   />
-                  <label htmlFor="assignment-file" className="cursor-pointer block space-y-2">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
-                      <UploadCloud className="w-6 h-6" />
-                    </div>
-                    <p className="text-xs sm:text-sm font-semibold text-slate-900">
-                      {selectedFile ? (
-                        <span className="text-indigo-600 font-bold">{selectedFile.name}</span>
-                      ) : (
-                        <>Click to upload or drag and drop your project archive</>
-                      )}
-                    </p>
-                    <p className="text-2xs text-slate-400">
-                      ZIP, TAR.GZ, PDF, or code files (Max 25MB)
-                    </p>
-                  </label>
-                </div>
+                  <div className="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center mx-auto mb-3">
+                    <UploadCloud className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <p className="text-sm font-semibold text-white/70">
+                    {selectedFile
+                      ? <span className="text-purple-400 font-bold">{selectedFile.name}</span>
+                      : 'Click to upload or drag and drop'}
+                  </p>
+                  <p className="text-[10px] text-white/25 mt-1">ZIP, TAR.GZ, PDF (Max 25MB)</p>
+                </label>
 
                 {selectedFile && (
-                  <div className="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-xl">
-                    <span className="text-xs text-slate-700 truncate">{selectedFile.name}</span>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/4 border border-white/8">
+                    <span className="text-xs text-white/60 truncate">{selectedFile.name}</span>
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setSelectedFile(null)}
-                        className="text-slate-400 hover:text-rose-600 p-1"
-                      >
+                      <button onClick={() => setSelectedFile(null)} className="p-1.5 text-white/25 hover:text-red-400 transition-colors cursor-pointer">
                         <Trash2 className="w-4 h-4" />
                       </button>
-                      <Button
-                        size="sm"
-                        variant="primary"
+                      <button
                         onClick={handleUploadSubmit}
-                        isLoading={isUploading}
-                        icon={Send}
+                        disabled={isUploading}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold hover:opacity-90 disabled:opacity-60 transition-all cursor-pointer"
                       >
-                        Submit Assignment
-                      </Button>
+                        {isUploading
+                          ? <><svg className="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/></svg> Uploading…</>
+                          : <><Send className="w-3.5 h-3.5" /> Submit Assignment</>
+                        }
+                      </button>
                     </div>
                   </div>
                 )}
               </div>
             )}
-          </Card>
+          </div>
         </div>
       </div>
 
-      {/* Instructor Feedback Modal */}
-      <Modal
-        isOpen={feedbackModalOpen}
-        onClose={() => setFeedbackModalOpen(false)}
-        title="Instructor Feedback & Grade"
-        subtitle={activeAssignment.title}
-      >
-        <div className="space-y-4">
-          <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between">
-            <div>
-              <p className="text-xs text-emerald-800 font-medium">Final Grade</p>
-              <h3 className="text-2xl font-extrabold text-emerald-900">
-                {activeAssignment.grade} / {activeAssignment.points} (A+)
-              </h3>
-            </div>
-            <Award className="w-10 h-10 text-emerald-600" />
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-              Instructor Notes from {activeAssignment.feedback?.instructor}:
-            </p>
-            <p className="text-xs sm:text-sm text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-200 leading-relaxed italic">
-              "{activeAssignment.feedback?.comments}"
-            </p>
-          </div>
-        </div>
-      </Modal>
+      {feedbackOpen && <FeedbackModal asg={active} onClose={() => setFeedbackOpen(false)} />}
     </div>
   )
 }

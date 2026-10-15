@@ -1,88 +1,133 @@
-import { createContext, useContext, useState, useEffect } from 'react'
-import { mockUser, mockInstructor } from '@/data/mockData'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { authService } from '@/services/authService'
+import { storeTokens as apiStoreTokens, clearTokens as apiClearTokens } from '@/services/api'
 
 const AuthContext = createContext(null)
 
+// ─── Token helpers ────────────────────────────────────────────────────────────
+const TOKEN_KEY = 'access_token'
+const USER_KEY = 'elearn_user'
+
+/** Centralised clear: removes tokens + user from BOTH storages (BUG-07). */
+function clearStorage() {
+  apiClearTokens()
+}
+
 export function AuthProvider({ children }) {
-  // Default to guest (null) so users start unauthenticated on the Landing Page
+  // Restore user from localStorage on first render (avoids flash of unauthenticated state)
   const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('elearn_user')
+    const stored = localStorage.getItem(USER_KEY)
     if (stored) {
-      try {
-        return JSON.parse(stored)
-      } catch {
-        return null
-      }
+      try { return JSON.parse(stored) } catch { return null }
     }
     return null
   })
 
+  // true while we are verifying a stored token against the backend
+  // BUG-07 fix: check BOTH sessionStorage and localStorage for an existing token
+  const [isInitializing, setIsInitializing] = useState(() =>
+    !!(sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY))
+  )
   const [isLoading, setIsLoading] = useState(false)
 
+  // ── On mount: re-validate any stored access token ────────────────────────────
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('elearn_user', JSON.stringify(user))
-    } else {
-      localStorage.removeItem('elearn_user')
+    const hasToken = !!(sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY))
+    if (!hasToken) {
+      setIsInitializing(false)
+      return
     }
-  }, [user])
 
-  const login = async ({ email, password, role = 'STUDENT' }) => {
-    setIsLoading(true)
-    // Simulate brief network delay
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    const selectedUser = role === 'INSTRUCTOR'
-      ? { ...mockInstructor, email: email || mockInstructor.email }
-      : { ...mockUser, email: email || mockUser.email }
-    setUser(selectedUser)
-    setIsLoading(false)
-    return selectedUser
-  }
+    let cancelled = false
 
-  const register = async (userData) => {
+    authService
+      .getProfile()
+      .then((profile) => {
+        if (cancelled) return
+        setUser(profile)
+        localStorage.setItem(USER_KEY, JSON.stringify(profile))
+      })
+      .catch(() => {
+        if (cancelled) return
+        // Token is invalid / expired — clear everything
+        clearStorage()
+        setUser(null)
+      })
+      .finally(() => {
+        if (!cancelled) setIsInitializing(false)
+      })
+
+    return () => { cancelled = true }
+  }, [])
+
+  // ── Login: POST /auth/login → store tokens → GET /users/me ───────────────────
+  // BUG-07 fix: accept `remember` and route to sessionStorage when false
+  const login = useCallback(async ({ email, password, remember = true }) => {
     setIsLoading(true)
-    await new Promise((resolve) => setTimeout(resolve, 300))
-    const newUser = {
-      ...(userData.role === 'INSTRUCTOR' ? mockInstructor : mockUser),
-      name: userData.name || mockUser.name,
-      email: userData.email || mockUser.email,
-      role: userData.role || 'STUDENT',
+    try {
+      const tokenResponse = await authService.login({ email, password })
+      // apiStoreTokens picks localStorage (remember=true) or sessionStorage (remember=false)
+      apiStoreTokens(tokenResponse, remember)
+
+      const profile = await authService.getProfile()
+      setUser(profile)
+      localStorage.setItem(USER_KEY, JSON.stringify(profile))
+      return profile
+    } catch (err) {
+      clearStorage()
+      setUser(null)
+      // Re-throw so the login page can display the error message
+      throw err
+    } finally {
+      setIsLoading(false)
     }
-    setUser(newUser)
-    setIsLoading(false)
-    return newUser
-  }
+  }, [])
 
-  const logout = () => {
+  // ── Register: POST /auth/register → then auto-login ──────────────────────────
+  const register = useCallback(async (userData) => {
+    setIsLoading(true)
+    try {
+      // Register first (returns UserResponse, no token)
+      await authService.register(userData)
+
+      // Auto-login with the same credentials (always remember on registration)
+      const tokenResponse = await authService.login({
+        email: userData.email,
+        password: userData.password,
+      })
+      apiStoreTokens(tokenResponse, true)
+
+      const profile = await authService.getProfile()
+      setUser(profile)
+      localStorage.setItem(USER_KEY, JSON.stringify(profile))
+      return profile
+    } catch (err) {
+      clearStorage()
+      setUser(null)
+      throw err
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // ── Logout ────────────────────────────────────────────────────────────────────
+  const logout = useCallback(() => {
+    clearStorage()
     setUser(null)
-    localStorage.removeItem('elearn_user')
-  }
-
-  // Handy evaluator helper to easily switch between Student and Instructor roles
-  const switchRole = (newRole) => {
-    if (newRole === 'INSTRUCTOR') {
-      setUser((prev) => ({
-        ...mockInstructor,
-        email: prev?.email || mockInstructor.email,
-      }))
-    } else {
-      setUser((prev) => ({
-        ...mockUser,
-        email: prev?.email || mockUser.email,
-      }))
-    }
-  }
+  }, [])
 
   const value = {
     user,
     isAuthenticated: !!user,
     isStudent: user?.role === 'STUDENT',
     isInstructor: user?.role === 'INSTRUCTOR',
+    isAdmin: user?.role === 'ADMIN',
+    /** True while we replay a stored token on first mount */
+    isInitializing,
     isLoading,
     login,
     register,
     logout,
-    switchRole,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

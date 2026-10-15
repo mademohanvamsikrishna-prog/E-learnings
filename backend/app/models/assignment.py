@@ -1,7 +1,7 @@
 import enum
 import uuid
 
-from sqlalchemy import Column, String, Text, Enum, ForeignKey, DateTime, func
+from sqlalchemy import Column, String, Text, Enum, ForeignKey, DateTime, Integer, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -23,7 +23,8 @@ class Assignment(Base):
     title = Column(String(255), nullable=False)
     description = Column(Text, nullable=False)
     due_date = Column(DateTime(timezone=True), nullable=True)
-    max_score = Column(String(10), default="100", nullable=False)
+    # BUG-19 fix: numeric type for proper grading calculation (was String)
+    max_score = Column(Integer, default=100, nullable=False)
 
     course_id = Column(UUID(as_uuid=True), ForeignKey("courses.id"), nullable=False)
     submissions = relationship("Submission", back_populates="assignment", cascade="all, delete-orphan")

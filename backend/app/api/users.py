@@ -1,15 +1,46 @@
 """
-Stub API routers — will be implemented feature-by-feature.
-Each router follows the same pattern: Router → Schema validation → Service → DB.
+User API routers.
+/users/me is fully implemented; other sub-resources remain stubs
+and will be implemented feature-by-feature.
 """
-from fastapi import APIRouter
+import uuid
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.dependencies import get_db, get_current_user_payload
+from app.models.user import User
+from app.schemas.user import UserResponse
 
 # ─── Users ───────────────────────────────────────────────────────────────────────
 router_users = APIRouter(prefix="/users", tags=["Users"])
 
-@router_users.get("/me")
-async def get_me():
-    return {"message": "Get current user — implementation pending"}
+
+@router_users.get("/me", response_model=UserResponse)
+async def get_me(
+    payload: dict = Depends(get_current_user_payload),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return the profile of the currently authenticated user."""
+    user_id_str: str = payload.get("sub", "")
+    try:
+        user_uuid = uuid.UUID(user_id_str)
+    except (ValueError, AttributeError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token subject",
+        )
+
+    result = await db.execute(select(User).where(User.id == user_uuid))
+    user: User | None = result.scalar_one_or_none()
+
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    return user
 
 
 # ─── Lessons ─────────────────────────────────────────────────────────────────────
